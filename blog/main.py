@@ -3,8 +3,17 @@ from .schema import Blog
 from . import models
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 models.Base.metadata.create_all(engine)
 
@@ -22,6 +31,19 @@ def create_blog(request: Blog, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_blog)
     return new_blog
+
+
+@app.delete('/blog/{id}', status_code=status.HTTP_204_NO_CONTENT)
+def destroy(id: int, db: Session = Depends(get_db)):
+    db.query(models.Blog).filter(models.Blog.id == id).delete(synchronize_session=False)
+    db.commit()
+    return 'done'
+
+'''@app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED)
+def update(id: int, request: Blog, db: Session = Depends(get_db)):
+    db.query(models.Blog).filter(models.Blog.id == id).update({'title': 'New Title'})
+    db.commit()
+    return {'Updated Successfully'}'''
 
 @app.get('/blog')
 def get_all_blog(db: Session = Depends(get_db)):
