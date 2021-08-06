@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, status
+from fastapi import FastAPI, Depends, status, Response, HTTPException
 from .schema import Blog
 from . import models
 from .database import engine, SessionLocal
@@ -28,7 +28,11 @@ def get_all_blog(db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
     return blogs
 
-@app.get('/blog/{id}')
-def get_blog(id: int, db: Session = Depends(get_db)):
+@app.get('/blog/{id}', status_code=status.HTTP_200_OK)
+def get_blog(id: int, response: Response, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
+    if not blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Blog with the id {id} not available')
+        #response.status_code = status.HTTP_404_NOT_FOUND
+        #return {'detail': f'Blog with the id {id} not available'}
     return blog
