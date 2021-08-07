@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Depends, status, Response, HTTPException
-from .schema import Blog
+from .schema import Blog, ShowBlog
 from . import models
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List
 
 app = FastAPI()
 
@@ -39,7 +40,7 @@ def destroy(id: int, db: Session = Depends(get_db)):
     db.commit()
     return 'done'
 
-@app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED)
+@app.put('/blog/{id}', status_code=status.HTTP_202_ACCEPTED, response_model=ShowBlog)
 def update(id: int, request: Blog, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id)
     if not blog.first():
@@ -49,12 +50,12 @@ def update(id: int, request: Blog, db: Session = Depends(get_db)):
         db.commit()
         return {'Updated Successfully'}
 
-@app.get('/blog')
+@app.get('/blog', response_model=List[ShowBlog])
 def get_all_blog(db: Session = Depends(get_db)):
     blogs = db.query(models.Blog).all()
     return blogs
 
-@app.get('/blog/{id}', status_code=status.HTTP_200_OK)
+@app.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=ShowBlog)
 def get_blog(id: int, response: Response, db: Session = Depends(get_db)):
     blog = db.query(models.Blog).filter(models.Blog.id == id).first()
     if not blog:
