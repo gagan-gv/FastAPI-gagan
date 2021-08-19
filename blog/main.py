@@ -9,14 +9,6 @@ from passlib.context import CryptContext
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 models.Base.metadata.create_all(engine)
 #Blog Start
 def get_db():
@@ -28,7 +20,7 @@ def get_db():
 
 @app.post('/blog', status_code=status.HTTP_201_CREATED, tags=["Blog"])
 def create_blog(request: Blog, db: Session = Depends(get_db)):
-    new_blog = models.Blog(title = request.title, body = request.body)
+    new_blog = models.Blog(title = request.title, body = request.body, user_id=1)
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
@@ -86,3 +78,11 @@ def get_user(id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
