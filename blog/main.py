@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, status, Response, HTTPException
 from .schema import Blog, ShowBlog, User, ShowUser
 from . import models
-from .database import engine, SessionLocal
+from .database import engine, get_db
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
@@ -10,14 +10,17 @@ from passlib.context import CryptContext
 app = FastAPI()
 
 models.Base.metadata.create_all(engine)
-#Blog Start
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
+
+#def get_db():
+#    db = SessionLocal()
+#    try:
+#        yield db
+#    finally:
+#        db.close()
+
+
+#Blog Start
 @app.post('/blog', status_code=status.HTTP_201_CREATED, tags=["Blog"])
 def create_blog(request: Blog, db: Session = Depends(get_db)):
     new_blog = models.Blog(title = request.title, body = request.body, user_id=1)
@@ -45,7 +48,9 @@ def update(id: int, request: Blog, db: Session = Depends(get_db)):
 
 @app.get('/blog', response_model=List[ShowBlog], tags=["Blog"])
 def get_all_blog(db: Session = Depends(get_db)):
+
     blogs = db.query(models.Blog).all()
+
     return blogs
 
 @app.get('/blog/{id}', status_code=status.HTTP_200_OK, response_model=ShowBlog, tags=["Blog"])
